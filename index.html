@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FOMOShield Interface - Rug Detection System</title>
+  <style>
+    :root {
+      --primary-color: #00ff00;
+      --background-color: #000000;
+      --terminal-background: rgba(0, 30, 0, 0.9);
+      --border-color: var(--primary-color);
+      --text-color: var(--primary-color);
+      --hover-background: var(--primary-color);
+      --hover-text: var(--background-color);
+    }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: 'Courier New', Courier, monospace;
+      background: var(--background-color);
+      color: var(--text-color);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    h1 {
+      font-size: 2rem;
+      text-shadow: 0 0 15px var(--primary-color);
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 800px;
+      background: rgba(0, 30, 0, 0.8);
+      border: 2px solid var(--border-color);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 30px rgba(0, 255, 0, 0.5);
+    }
+
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px;
+      border: 2px solid var(--border-color);
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+      background: rgba(0, 60, 0, 0.4);
+    }
+
+    .terminal {
+      background: var(--terminal-background);
+      border: 2px solid var(--border-color);
+      height: 200px;
+      padding: 15px;
+      font-size: 0.9rem;
+      overflow-y: scroll;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .terminal p {
+      margin: 0;
+      opacity: 0.9;
+    }
+
+    .button {
+      width: 100%;
+      padding: 15px;
+      background: transparent;
+      border: 2px solid var(--border-color);
+      color: var(--text-color);
+      font-size: 1.1rem;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .button:hover {
+      background: var(--hover-background);
+      color: var(--hover-text);
+      box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+    }
+
+    .disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .coordinates {
+      margin-top: 15px;
+      color: #4dff4d;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>FOMOShield - Rug Detection System</h1>
+
+  <div class="container">
+    <div class="status-bar">
+      <span id="connection-status">STATUS: DISCONNECTED</span>
+      <span id="wallet-status">WALLET: NOT CONNECTED</span>
+    </div>
+
+    <div class="terminal" id="terminal-log">
+      <p>[SYSTEM] FOMOShield Initialized...</p>
+      <p>[INFO] Please connect your Phantom Wallet to continue.</p>
+    </div>
+
+    <button class="button" id="connect-wallet">Connect Phantom Wallet</button>
+    <button class="button hidden" id="activate-shield" disabled>Activate Shield Mode</button>
+
+    <p class="coordinates" id="coordinates">LAT: --.----- LON: --.-----</p>
+  </div>
+
+  <script>
+    const terminalLog = document.getElementById('terminal-log');
+    const connectWalletButton = document.getElementById('connect-wallet');
+    const activateShieldButton = document.getElementById('activate-shield');
+    const connectionStatus = document.getElementById('connection-status');
+    const walletStatus = document.getElementById('wallet-status');
+    const coordinatesDisplay = document.getElementById('coordinates');
+
+    let walletConnected = false;
+
+    const logs = [
+      "[WARNING] Large wallet detected selling 50% of holdings!",
+      "[ALERT] Liquidity pool outflow spike detected!",
+      "[INFO] Price impact exceeds 10% threshold.",
+      "[SHIELD] Activating anti-rug protocol...",
+      "[SUCCESS] Transactions temporarily paused. FOMOShield active."
+    ];
+
+    function updateTerminalLog(content) {
+      const timestamp = new Date().toLocaleTimeString();
+      terminalLog.innerHTML += `<p>[${timestamp}] ${content}</p>`;
+      terminalLog.scrollTop = terminalLog.scrollHeight;
+    }
+
+    function generateRandomCoordinates() {
+      const lat = (Math.random() * 180 - 90).toFixed(6);
+      const lon = (Math.random() * 360 - 180).toFixed(6);
+      coordinatesDisplay.textContent = `LAT: ${lat} LON: ${lon}`;
+    }
+
+    // Function to check for Phantom Wallet
+    function isPhantomInstalled() {
+      return window.solana && window.solana.isPhantom;
+    }
+
+    async function connectWallet() {
+      if (!isPhantomInstalled()) {
+        updateTerminalLog("[ERROR] Phantom Wallet is not installed. Please install it.");
+        window.open("https://phantom.app/", "_blank");
+        return;
+      }
+
+      try {
+        const walletResponse = await window.solana.connect();
+        walletConnected = true;
+        connectionStatus.textContent = "STATUS: CONNECTED";
+        walletStatus.textContent = `WALLET: ${walletResponse.publicKey.toString()}`;
+        updateTerminalLog(`[SUCCESS] Connected to Phantom Wallet: ${walletResponse.publicKey.toString()}`);
+        connectWalletButton.classList.add("hidden");
+        activateShieldButton.classList.remove("hidden");
+        activateShieldButton.disabled = false;
+      } catch (error) {
+        updateTerminalLog("[ERROR] Wallet connection failed. Please try again.");
+      }
+    }
+
+    connectWalletButton.addEventListener('click', connectWallet);
+
+    activateShieldButton.addEventListener('click', () => {
+      if (!walletConnected) {
+        updateTerminalLog("[ERROR] Please connect your Phantom Wallet before using FOMOShield.");
+        return;
+      }
+
+      activateShieldButton.disabled = true;
+      updateTerminalLog("[SYSTEM] Shield Mode activation in progress...");
+
+      let index = 0;
+      const interval = setInterval(() => {
+        updateTerminalLog(logs[index]);
+        index++;
+
+        if (index === logs.length) {
+          clearInterval(interval);
+          activateShieldButton.disabled = false;
+          activateShieldButton.textContent = "Shield Mode Ready";
+        }
+      }, 2000);
+    });
+
+    // Update random coordinates every 5 seconds
+    setInterval(generateRandomCoordinates, 5000);
+  </script>
+</body>
+</html>
